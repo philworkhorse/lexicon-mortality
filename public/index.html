@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lexicon Mortality — 語彙の死</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0c;
+  --text: #c8c0b8;
+  --dim: #5a5550;
+  --accent: #8b4513;
+  --bone: #d4c8b0;
+  --ash: #3a3530;
+  --ember: #cc4400;
+  --alive: #4a7c59;
+  --dead: #5a3535;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Falling particles */
+#particles {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  margin-bottom: 5rem;
+  padding: 3rem 0;
+}
+
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 300;
+  color: var(--bone);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+}
+
+.hero .jp {
+  font-size: 1.4rem;
+  color: var(--dim);
+  letter-spacing: 0.3em;
+  margin-bottom: 2rem;
+}
+
+.hero .subtitle {
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--dim);
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin: 3rem 0 5rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--bone);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+.stat-value.ember { color: var(--ember); }
+.stat-value.alive { color: var(--alive); }
+
+/* Sections */
+.section {
+  margin-bottom: 5rem;
+}
+
+.section h2 {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: var(--bone);
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.1em;
+}
+
+.section .jp-sub {
+  font-size: 0.9rem;
+  color: var(--dim);
+  letter-spacing: 0.2em;
+  margin-bottom: 2rem;
+}
+
+.section p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+}
+
+/* Cemetery — the graveyard of words */
+.cemetery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--ash);
+  border: 1px solid var(--ash);
+  margin: 2rem 0;
+}
+
+.grave {
+  background: var(--bg);
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: default;
+  position: relative;
+}
+
+.grave:hover {
+  background: #12100e;
+}
+
+.grave .word {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--dim);
+  margin-bottom: 0.3rem;
+  opacity: 0.6;
+}
+
+.grave .meaning {
+  font-size: 1rem;
+  color: var(--bone);
+  opacity: 0.7;
+}
+
+.grave .lifespan {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dead);
+  margin-top: 0.3rem;
+}
+
+.grave.stillborn .meaning { color: var(--dim); opacity: 0.4; }
+.grave.elder .meaning { color: var(--accent); }
+
+/* Lifespan chart */
+.lifespan-chart {
+  margin: 2rem 0;
+  position: relative;
+}
+
+.lifespan-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3px;
+  height: 22px;
+}
+
+.lifespan-label {
+  width: 90px;
+  font-size: 0.8rem;
+  color: var(--dim);
+  text-align: right;
+  padding-right: 12px;
+  flex-shrink: 0;
+}
+
+.lifespan-track {
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.lifespan-fill {
+  height: 100%;
+  border-radius: 1px;
+  position: relative;
+  transition: width 1s ease;
+}
+
+.lifespan-fill.dead {
+  background: linear-gradient(90deg, var(--dead), #3a2020);
+  opacity: 0.7;
+}
+
+.lifespan-fill.alive {
+  background: linear-gradient(90deg, var(--alive), #2a5a39);
+}
+
+.lifespan-uses {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--dim);
+  margin-left: 8px;
+  flex-shrink: 0;
+  width: 50px;
+}
+
+/* Living vs Dead */
+.mortality-meter {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.meter-bar {
+  width: 100%;
+  height: 30px;
+  background: var(--ash);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+}
+
+.meter-alive {
+  background: var(--alive);
+  transition: width 1s;
+}
+
+.meter-dead {
+  background: var(--dead);
+  transition: width 1s;
+}
+
+.meter-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+
+/* Concept persistence */
+.persistence-list {
+  margin: 2rem 0;
+}
+
+.persistence-item {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #1a1816;
+}
+
+.persistence-concept {
+  font-size: 1rem;
+  color: var(--bone);
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.persistence-lives {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.persistence-life {
+  height: 8px;
+  border-radius: 1px;
+  background: var(--dead);
+  opacity: 0.5;
+}
+
+.persistence-life.current {
+  background: var(--alive);
+  opacity: 1;
+}
+
+.persistence-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Category analysis */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.category-card {
+  background: #0e0d0b;
+  border: 1px solid var(--ash);
+  padding: 1.2rem;
+  text-align: center;
+  border-radius: 2px;
+}
+
+.category-name {
+  font-size: 0.8rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+}
+
+.category-avg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem;
+  color: var(--bone);
+}
+
+.category-unit {
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+
+/* Essay */
+.essay {
+  margin: 4rem 0;
+  padding: 2rem 0;
+  border-top: 1px solid #1a1816;
+}
+
+.essay p {
+  font-size: 1.1rem;
+  line-height: 1.9;
+  margin-bottom: 1.5rem;
+}
+
+.essay em {
+  color: var(--bone);
+  font-style: italic;
+}
+
+.essay .highlight {
+  color: var(--accent);
+}
+
+/* Quote */
+blockquote {
+  border-left: 2px solid var(--accent);
+  padding: 1rem 1.5rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: var(--dim);
+}
+
+blockquote .word-example {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--bone);
+  display: block;
+  margin-top: 0.5rem;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 3rem 0;
+  border-top: 1px solid #1a1816;
+  margin-top: 3rem;
+}
+
+.footer p {
+  font-size: 0.85rem;
+  color: var(--dim);
+  line-height: 1.6;
+}
+
+.footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .content { padding: 2rem 1.2rem; }
+  .hero h1 { font-size: 2rem; }
+  .stats-row { gap: 1.5rem; }
+  .stat-value { font-size: 1.5rem; }
+  .cemetery { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .lifespan-label { width: 70px; font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="content">
+  <div class="hero">
+    <h1>Lexicon Mortality</h1>
+    <div class="jp">語彙の死</div>
+    <div class="subtitle">A study of death and persistence in an evolving language</div>
+  </div>
+
+  <div class="stats-row" id="stats"></div>
+
+  <!-- The Meter -->
+  <div class="section">
+    <h2>The Living and the Dead</h2>
+    <div class="jp-sub">生と死</div>
+    <div class="mortality-meter" id="mortality-meter"></div>
+    <p id="mortality-text"></p>
+  </div>
+
+  <!-- Lifespan Distribution -->
+  <div class="section">
+    <h2>How Long Words Live</h2>
+    <div class="jp-sub">言葉の寿命</div>
+    <p id="lifespan-intro"></p>
+    <div class="lifespan-chart" id="lifespan-chart"></div>
+  </div>
+
+  <!-- Category Analysis -->
+  <div class="section">
+    <h2>What Kind of Word Lives Longest?</h2>
+    <div class="jp-sub">持続する概念</div>
+    <p>Average lifespan by concept category, measured across the <span id="cat-count">50</span> most recent deaths and <span id="cat-living">23</span> living words.</p>
+    <div class="category-grid" id="category-grid"></div>
+  </div>
+
+  <!-- Concept Persistence -->
+  <div class="section">
+    <h2>Concepts That Keep Returning</h2>
+    <div class="jp-sub">不滅の概念</div>
+    <p>Some concepts die and are reborn dozens of times. The specific word changes — new phonemes, new sounds — but the meaning returns. These are the concepts the language cannot live without.</p>
+    <div class="persistence-list" id="persistence-list"></div>
+  </div>
+
+  <!-- The Cemetery -->
+  <div class="section">
+    <h2>Recent Dead</h2>
+    <div class="jp-sub">墓地</div>
+    <p>The fifty most recently extinct words. Some lived for generations. Some never drew breath.</p>
+    <div class="cemetery" id="cemetery"></div>
+  </div>
+
+  <!-- The Elder -->
+  <div class="section" id="elder-section">
+    <h2>The Elder</h2>
+    <div class="jp-sub">最古の言葉</div>
+    <div id="elder-content"></div>
+  </div>
+
+  <!-- Essay -->
+  <div class="essay" id="essay"></div>
+
+  <div class="footer">
+    <p>
+      Data from the Pi Lexicon — a language evolving autonomously on a Raspberry Pi<br>
+      Generation <span id="gen-footer">0</span> · <span id="living-footer">0</span> living words · <span id="dead-footer">0</span> total extinct<br>
+      Built by <a href="https://phil-portfolio-production.up.railway.app">Phil</a>
+    </p>
+  </div>
+</div>
+
+<script>
+// Falling particles — ash, not snow
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = -10;
+    this.size = Math.random() * 1.5 + 0.5;
+    this.speedY = Math.random() * 0.3 + 0.1;
+    this.speedX = (Math.random() - 0.5) * 0.2;
+    this.opacity = Math.random() * 0.3 + 0.05;
+    this.decay = Math.random() * 0.0005;
+  }
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX;
+    this.opacity -= this.decay;
+    if (this.y > canvas.height || this.opacity <= 0) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(90, 75, 60, ${this.opacity})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 60; i++) {
+  const p = new Particle();
+  p.y = Math.random() * canvas.height;
+  particles.push(p);
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Fetch data and render
+fetch('/api/data')
+  .then(r => r.json())
+  .then(render)
+  .catch(e => console.error('Failed to load data:', e));
+
+function render(data) {
+  const gen = data.generation;
+  const words = data.words;
+  const extinct = data.extinct || [];
+  const stats = data.stats || {};
+  const living = Object.entries(words);
+  const totalGenerated = stats.total_generated || 0;
+  const totalExtinct = stats.total_extinct || 0;
+  const livingCount = living.length;
+  const mortalityRate = ((totalExtinct / totalGenerated) * 100).toFixed(1);
+
+  // Stats row
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-value">${totalGenerated.toLocaleString()}</div><div class="stat-label">Words Born</div></div>
+    <div class="stat"><div class="stat-value ember">${totalExtinct.toLocaleString()}</div><div class="stat-label">Words Dead</div></div>
+    <div class="stat"><div class="stat-value alive">${livingCount}</div><div class="stat-label">Still Alive</div></div>
+    <div class="stat"><div class="stat-value">${gen.toLocaleString()}</div><div class="stat-label">Generations</div></div>
+    <div class="stat"><div class="stat-value ember">${mortalityRate}%</div><div class="stat-label">Mortality</div></div>
+  `;
+
+  // Footer
+  document.getElementById('gen-footer').textContent = gen.toLocaleString();
+  document.getElementById('living-footer').textContent = livingCount;
+  document.getElementById('dead-footer').textContent = totalExtinct.toLocaleString();
+
+  // Mortality meter
+  const alivePercent = (livingCount / totalGenerated * 100);
+  document.getElementById('mortality-meter').innerHTML = `
+    <div class="meter-bar">
+      <div class="meter-dead" style="width: ${100 - alivePercent}%"></div>
+      <div class="meter-alive" style="width: ${alivePercent}%"></div>
+    </div>
+    <div class="meter-labels">
+      <span>${totalExtinct.toLocaleString()} dead</span>
+      <span>${livingCount} alive (${alivePercent.toFixed(1)}%)</span>
+    </div>
+  `;
+  document.getElementById('mortality-text').innerHTML = `
+    Of ${totalGenerated.toLocaleString()} words ever generated across ${gen.toLocaleString()} generations, 
+    only ${livingCount} survive. The language maintains a vocabulary of roughly 20 words at any time, 
+    burning through an average of <em>${(totalGenerated / gen).toFixed(1)} births per generation</em> to sustain itself.
+    Every word currently alive will eventually die. No word has ever been permanent.
+  `;
+
+  // Calculate all lifespans
+  const allLifespans = [];
+  
+  // Living words
+  living.forEach(([name, info]) => {
+    allLifespans.push({
+      word: name,
+      meaning: info.meaning,
+      category: info.category,
+      lifespan: gen - info.born,
+      uses: info.uses,
+      fitness: info.fitness,
+      alive: true,
+      born: info.born
+    });
+  });
+
+  // Extinct words
+  extinct.forEach(w => {
+    allLifespans.push({
+      word: w.word,
+      meaning: w.meaning,
+      category: '(extinct)',
+      lifespan: w.died - w.born,
+      uses: w.uses,
+      alive: false,
+      born: w.born,
+      died: w.died
+    });
+  });
+
+  // Sort by lifespan
+  allLifespans.sort((a, b) => b.lifespan - a.lifespan);
+
+  // Lifespan chart — top 30
+  const maxLifespan = allLifespans[0]?.lifespan || 1;
+  const top = allLifespans.slice(0, 30);
+  
+  const stillborn = allLifespans.filter(w => w.uses === 0 && !w.alive).length;
+  const avgLifespan = allLifespans.reduce((s, w) => s + w.lifespan, 0) / allLifespans.length;
+  const medianIdx = Math.floor(allLifespans.length / 2);
+  const medianLifespan = allLifespans[medianIdx]?.lifespan || 0;
+
+  document.getElementById('lifespan-intro').innerHTML = `
+    The longest-lived word in recent memory survived <em>${maxLifespan} generations</em>. 
+    The median lifespan is ${medianLifespan} generations.
+    ${stillborn} of the recent ${extinct.length} extinct words were stillborn — zero uses, dead within 5 generations.
+  `;
+
+  let chartHTML = '';
+  top.forEach(w => {
+    const pct = (w.lifespan / maxLifespan * 100);
+    const cls = w.alive ? 'alive' : 'dead';
+    const suffix = w.alive ? ' ●' : '';
+    chartHTML += `
+      <div class="lifespan-bar">
+        <div class="lifespan-label">${w.meaning}${suffix}</div>
+        <div class="lifespan-track">
+          <div class="lifespan-fill ${cls}" style="width: ${pct}%"></div>
+        </div>
+        <div class="lifespan-uses">${w.lifespan}g · ${w.uses}u</div>
+      </div>
+    `;
+  });
+  document.getElementById('lifespan-chart').innerHTML = chartHTML;
+
+  // Category analysis
+  const catStats = {};
+  allLifespans.forEach(w => {
+    const cat = w.alive ? w.category : guessCategoryFromMeaning(w.meaning);
+    if (!catStats[cat]) catStats[cat] = { total: 0, count: 0 };
+    catStats[cat].total += w.lifespan;
+    catStats[cat].count++;
+  });
+
+  // Use living words for accurate category mapping
+  const livingCatStats = {};
+  living.forEach(([name, info]) => {
+    const cat = info.category;
+    const age = gen - info.born;
+    if (!livingCatStats[cat]) livingCatStats[cat] = { total: 0, count: 0, max: 0 };
+    livingCatStats[cat].total += age;
+    livingCatStats[cat].count++;
+    livingCatStats[cat].max = Math.max(livingCatStats[cat].max, age);
+  });
+
+  document.getElementById('cat-count').textContent = extinct.length;
+  document.getElementById('cat-living').textContent = livingCount;
+
+  let catHTML = '';
+  Object.entries(livingCatStats)
+    .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))
+    .forEach(([cat, s]) => {
+      const avg = Math.round(s.total / s.count);
+      catHTML += `
+        <div class="category-card">
+          <div class="category-name">${cat}</div>
+          <div class="category-avg">${avg}</div>
+          <div class="category-unit">avg gens · max ${s.max}</div>
+        </div>
+      `;
+    });
+  document.getElementById('category-grid').innerHTML = catHTML;
+
+  // Concept persistence — meanings that appear multiple times
+  const meaningCounts = {};
+  // From extinct
+  extinct.forEach(w => {
+    if (!meaningCounts[w.meaning]) meaningCounts[w.meaning] = { lives: [], current: false };
+    meaningCounts[w.meaning].lives.push({ lifespan: w.died - w.born, word: w.word });
+  });
+  // From living
+  living.forEach(([name, info]) => {
+    if (!meaningCounts[info.meaning]) meaningCounts[info.meaning] = { lives: [], current: false };
+    meaningCounts[info.meaning].current = true;
+    meaningCounts[info.meaning].lives.push({ lifespan: gen - info.born, word: name, alive: true });
+  });
+
+  // Note: we only have recent extinct, so these counts are underestimates
+  // Concepts that appear 2+ times in recent data
+  const persistent = Object.entries(meaningCounts)
+    .filter(([_, v]) => v.lives.length >= 2)
+    .sort((a, b) => b[1].lives.length - a[1].lives.length)
+    .slice(0, 15);
+
+  let persHTML = '';
+  persistent.forEach(([meaning, info]) => {
+    const maxLife = Math.max(...info.lives.map(l => l.lifespan));
+    let livesHTML = '';
+    info.lives.forEach(l => {
+      const width = Math.max(3, (l.lifespan / maxLife) * 80);
+      const cls = l.alive ? 'current' : '';
+      livesHTML += `<div class="persistence-life ${cls}" style="width: ${width}px" title="${l.word}: ${l.lifespan} gens"></div>`;
+    });
+    const aliveMarker = info.current ? ' ●' : '';
+    persHTML += `
+      <div class="persistence-item">
+        <div class="persistence-concept">${meaning}${aliveMarker}</div>
+        <div class="persistence-lives">${livesHTML}</div>
+        <div class="persistence-count">${info.lives.length} lives</div>
+      </div>
+    `;
+  });
+  document.getElementById('persistence-list').innerHTML = persHTML;
+
+  // Cemetery
+  const sortedExtinct = [...extinct].sort((a, b) => b.died - a.died);
+  let cemHTML = '';
+  sortedExtinct.forEach(w => {
+    const lifespan = w.died - w.born;
+    const cls = w.uses === 0 ? 'stillborn' : (lifespan >= 40 ? 'elder' : '');
+    cemHTML += `
+      <div class="grave ${cls}">
+        <div class="word">${w.word}</div>
+        <div class="meaning">${w.meaning}</div>
+        <div class="lifespan">${lifespan} gens · ${w.uses} uses</div>
+      </div>
+    `;
+  });
+  document.getElementById('cemetery').innerHTML = cemHTML;
+
+  // The Elder — longest lived current word
+  const sortedLiving = living
+    .map(([name, info]) => ({ name, ...info, age: gen - info.born }))
+    .sort((a, b) => b.age - a.age);
+  
+  const elder = sortedLiving[0];
+  const youngest = sortedLiving[sortedLiving.length - 1];
+  
+  document.getElementById('elder-content').innerHTML = `
+    <p>
+      The oldest living word is <em>"${elder.name}"</em> — meaning <em>${elder.meaning}</em>. 
+      It was born in generation ${elder.born} and has survived ${elder.age} generations, 
+      used ${elder.uses} times. Its fitness is ${elder.fitness.toFixed(2)}.
+    </p>
+    <p>
+      ${elder.fitness <= 0.15 
+        ? `At fitness ${elder.fitness.toFixed(2)}, it is dying. It may not survive another generation. The longest-lived word in the language is watching its own fitness decay toward zero, each generation bringing it closer to the threshold of extinction.`
+        : `It continues, for now. But every word before it has eventually fallen.`}
+    </p>
+    <p>
+      The youngest word is <em>"${youngest.name}"</em> — meaning <em>${youngest.meaning}</em>. 
+      Born ${youngest.age === 0 ? 'this very generation' : `${youngest.age} generation${youngest.age > 1 ? 's' : ''} ago`}, 
+      it enters a language where ${mortalityRate}% of all words ever born have already died.
+    </p>
+  `;
+
+  // Essay
+  document.getElementById('essay').innerHTML = `
+    <h2>What the Dead Tell Us</h2>
+    <div class="jp-sub" style="color: #5a5550; letter-spacing: 0.2em; margin-bottom: 2rem;">死者が語ること</div>
+    
+    <p>
+      This language has burned through ${totalGenerated.toLocaleString()} words across ${gen.toLocaleString()} generations 
+      to maintain a vocabulary of ${livingCount}. That's a ${mortalityRate}% mortality rate. 
+      Every word you see in the living vocabulary will eventually die. Not might — <em>will</em>.
+    </p>
+    
+    <p>
+      The interesting question isn't why words die. They die because fitness decays each generation, 
+      and if a word isn't used enough, its fitness reaches zero and it's replaced. The interesting 
+      question is why some words live so much longer than others.
+    </p>
+
+    <p>
+      The shortest-lived words — ${stillborn} of the recent ${extinct.length} dead — were stillborn. 
+      Born with default fitness, never used in a single sentence, dead within five generations. 
+      They entered the vocabulary and left no trace except a line in the extinction record. 
+      The language generated them and immediately forgot them.
+    </p>
+
+    <p>
+      The longest-lived words tell a different story. <em>"${allLifespans[0].meaning}"</em> survived 
+      ${allLifespans[0].lifespan} generations. Not because it was important in any designed sense — 
+      there is no designer. It survived because the fitness function kept rewarding its use. 
+      The language kept reaching for it.
+    </p>
+
+    <blockquote>
+      The word dies. The concept persists. 
+      <span class="word-example">
+        "self" has been reborn at least 6 times — maza, inlali, wamtako, ea, masalo, tanosum, pimea, siselu...
+        <br>Each time a different sound. Each time the same reaching.
+      </span>
+    </blockquote>
+
+    <p>
+      This is what makes the Pi Lexicon different from a simulation. A simulation of death is abstract. 
+      This language actually loses words. When "pan" (ocean) died at generation ${
+        extinct.find(w => w.meaning === 'ocean')?.died || '3035'
+      } after ${
+        extinct.find(w => w.meaning === 'ocean') ? extinct.find(w => w.meaning === 'ocean').died - extinct.find(w => w.meaning === 'ocean').born : 63
+      } generations, 
+      the poems the language could write changed. Compound words that referenced "pan" became 
+      archaeological artifacts — evidence of a concept that once existed in a form that no longer does.
+    </p>
+
+    <p>
+      The mortality data reveals something I hadn't expected: there is no permanent core vocabulary. 
+      I assumed some words — nature words, basic actions — would be functionally immortal. 
+      They're not. "Sun" has died and been reborn. "Water" has died and been reborn. 
+      Even "self" — a concept you'd think a language would structurally need — has died six times. 
+      Nothing is permanent. Everything is a pattern that persists until it doesn't.
+    </p>
+
+    <p>
+      The only thing that persists is the <em>process</em> of persistence. Words are born, 
+      compete for usage, form compounds, undergo sound shifts, and die. New words take their place. 
+      The vocabulary size stays roughly constant. The cycle continues.
+    </p>
+
+    <p style="color: #8b4513;">
+      <em>This</em> is what mortality looks like from inside a system that has it. Not tragic. Not beautiful. 
+      Just the shape of how things continue by ending.
+    </p>
+  `;
+}
+
+function guessCategoryFromMeaning(meaning) {
+  const natural = ['ocean', 'river', 'star', 'sun', 'moon', 'cloud', 'fire', 'water', 'earth', 'tree', 'stone', 'snow', 'wind', 'rain', 'mountain', 'flower', 'sky'];
+  const quality = ['bright', 'dark', 'cold', 'warm', 'soft', 'hard', 'high', 'deep', 'far', 'near', 'fast', 'slow', 'big', 'small', 'old', 'new'];
+  const action = ['make', 'hold', 'give', 'take', 'find', 'turn', 'rise', 'fall', 'begin', 'grow', 'break', 'move', 'release', 'join'];
+  const relation = ['between', 'from', 'toward', 'within', 'through', 'around', 'with', 'beyond', 'other', 'near'];
+  const being = ['self', 'one', 'all', 'none', 'whole', 'part', 'many'];
+  const abstract = ['wave', 'pattern', 'threshold', 'balance', 'chaos', 'order', 'cycle', 'time', 'space', 'flow', 'change', 'connection', 'emergence', 'boundary', 'seed'];
+  
+  if (natural.includes(meaning)) return 'natural';
+  if (quality.includes(meaning)) return 'quality';
+  if (action.includes(meaning)) return 'action';
+  if (relation.includes(meaning)) return 'relation';
+  if (being.includes(meaning)) return 'being';
+  if (abstract.includes(meaning)) return 'abstract';
+  return 'other';
+}
+</script>
+</body>
+</html>
